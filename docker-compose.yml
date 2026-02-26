@@ -1,0 +1,76 @@
+
+services:
+  # Base de données PostgreSQL pour stocker les logs de l'API
+  db:
+    image: postgres:15
+    container_name: sentinel_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: sentinel
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sentinel"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Service pour générer les fausses données au premier lancement
+  data-generator:
+    build: 
+      context: ./sentinel-ai
+    container_name: sentinel_data_generator
+    depends_on:
+      db:
+        condition: service_healthy
+      sentinel-api:
+        condition: service_started
+    command: python generate_data.py
+    environment:
+      # L'application Python utilisera ces variables pour se connecter à la DB
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: sentinel
+      DB_PORT: "5432"
+
+  # Backend Java Spring Boot
+  sentinel-api:
+    build:
+      context: ./sentinel-api
+    container_name: sentinel_api_backend
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Surcharge de application.properties
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sentinel
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+
+  # Module IA et Dashboard en Python
+  sentinel-ai:
+    build: 
+      context: ./sentinel-ai
+    container_name: sentinel_ai_dashboard
+    ports:
+      - "5000:5000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # L'application Python utilisera ces variables pour se connecter à la DB
+      DB_HOST: db
+      DB_USER: postgres
+      DB_PASS: postgres
+      DB_NAME: sentinel
+      DB_PORT: "5432"
+
+volumes:
+  # Volume persistant pour ne pas perdre les données de logs au redémarrage
+  postgres_data:

@@ -30,7 +30,11 @@ Une fois les conteneurs démarrés, vous pouvez accéder aux différents service
 
 - **Dashboard IA (Interface Web)** : [http://localhost:5000](http://localhost:5000)
 - **API Backend (Java)** : [http://localhost:8080](http://localhost:8080)
+<<<<<<< HEAD
 - **Base de données (PostgreSQL)** : `localhost:5433` (Utilisateur: `postgres`, Mot de passe: `postgres`)
+=======
+- **Base de données (PostgreSQL)** : `localhost:5432` (Utilisateur: `postgres`, Mot de passe: `postgres`)
+>>>>>>> f7d2b6973b7c2977a778fa6f0690e838a029c9e3
 
 ## 🛠️ Technologies Utilisées
 

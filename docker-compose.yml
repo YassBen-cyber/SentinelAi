@@ -8,12 +8,13 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: sentinel
+      PGPORT: 5433
     ports:
-      - "5432:5432"
+      - "5433:5433"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d sentinel"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sentinel -p 5433"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +36,7 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       DB_NAME: sentinel
-      DB_PORT: "5432"
+      DB_PORT: "5433"
 
   # Backend Java Spring Boot
   sentinel-api:
@@ -49,7 +50,7 @@ services:
         condition: service_healthy
     environment:
       # Surcharge de application.properties
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/sentinel
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5433/sentinel
       SPRING_DATASOURCE_USERNAME: postgres
       SPRING_DATASOURCE_PASSWORD: postgres
 
@@ -69,7 +70,7 @@ services:
       DB_USER: postgres
       DB_PASS: postgres
       DB_NAME: sentinel
-      DB_PORT: "5432"
+      DB_PORT: "5433"
 
 volumes:
   # Volume persistant pour ne pas perdre les données de logs au redémarrage

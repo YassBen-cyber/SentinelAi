@@ -6,12 +6,37 @@ import pandas as pd
 import joblib
 import datetime
 import io
+import threading
+import time
+from train_model import train_and_save
 
 app = Flask(__name__)
 CORS(app)
 
-# Charger le modèle IA préalablement entraîné
-model = joblib.load('isolation_forest_model.joblib')
+model = None
+try:
+    if os.path.exists('isolation_forest_model.joblib'):
+        model = joblib.load('isolation_forest_model.joblib')
+except Exception as e:
+    print(f"Erreur au chargement du modèle initial : {e}")
+
+# Tâche de fond pour l'entraînement automatique du modèle
+def auto_train_task():
+    global model
+    while True:
+        try:
+            print("Lancement de l'entraînement automatique du modèle en tâche de fond...")
+            success = train_and_save()
+            if success:
+                print("Mise à jour du modèle IA en mémoire terminée avec succès.")
+                model = joblib.load('isolation_forest_model.joblib')
+        except Exception as e:
+            print(f"Erreur durant l'entraînement automatique : {e}")
+        
+        # Le modèle s'entraîne automatiquement toutes les heures
+        time.sleep(3600)
+
+threading.Thread(target=auto_train_task, daemon=True).start()
 
 def get_db_connection():
     return psycopg2.connect(
@@ -39,6 +64,10 @@ def get_stats():
 
         if df.empty:
             return jsonify({"error": "No data found"})
+
+        global model
+        if model is None:
+            return jsonify({"error": "Le modèle est en cours d'entraînement. Veuillez patienter et réessayer dans quelques instants."}), 503
 
         # Feature Engineering (Identique à l'entraînement)
         df['has_suspected_payload'] = df['suspected_payload'].notnull().astype(int)
@@ -91,6 +120,10 @@ def download_report():
 
         if df.empty:
             return jsonify({"error": "No data for report"}), 404
+
+        global model
+        if model is None:
+            return jsonify({"error": "Le modèle est en cours d'entraînement. Veuillez patienter et réessayer dans quelques instants."}), 503
 
         df['has_suspected_payload'] = df['suspected_payload'].notnull().astype(int)
         df['is_error'] = (df['status_code'] >= 400).astype(int)

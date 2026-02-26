@@ -13,7 +13,7 @@ for i in range(max_retries):
             user="postgres",
             password="postgres",
             host="db",
-            port="5432"
+            port="5433"
         )
         print("Connecté à la base de données !")
         break

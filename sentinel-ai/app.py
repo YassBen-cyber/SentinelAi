@@ -99,6 +99,12 @@ def get_stats():
         for r in anomalies_list:
             r['timestamp'] = str(r['timestamp'])
 
+        new_alerts = []
+        for ip in anomalies['ip_address'].unique():
+            if ip not in alerted_ips:
+                alerted_ips.add(ip)
+                new_alerts.append(f"Nouvelle menace détectée pour l'IP {ip}")
+
         return jsonify({
             "total_requests": total_requests,
             "total_anomalies": total_anomalies,
